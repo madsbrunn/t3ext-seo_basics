@@ -1,3 +1,10 @@
+2015-07-28
+
+	* [REFACTOR] Changed file / class structure
+	* [CLEANUP] Set requirements to TYPO3 6.0
+	* [BUGFIX] Canonical URL does not work with 6.2
+
+
 2014-07-02  Benjamin Mack  <benni@typo3.org>
 
 	* [BUGFIX] Sitemap does not work with 6.2, see #58638

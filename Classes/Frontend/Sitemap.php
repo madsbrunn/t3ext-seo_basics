@@ -1,19 +1,22 @@
 <?php
+
+namespace B13\SeoBasics\Frontend;
+
 /***************************************************************
 *  Copyright notice
-*  
+*
 *  (c) 2007-2014 Benjamin Mack <benni@typo3.org>
 *  All rights reserved
 *
-*  This script is part of the Typo3 project. The Typo3 project is 
+*  This script is part of the Typo3 project. The Typo3 project is
 *  free software; you can redistribute it and/or modify
 *  it under the terms of the GNU General Public License as published by
 *  the Free Software Foundation; either version 2 of the License, or
 *  (at your option) any later version.
-* 
+*
 *  The GNU General Public License can be found at
 *  http://www.gnu.org/copyleft/gpl.html.
-* 
+*
 *  This script is distributed in the hope that it will be useful,
 *  but WITHOUT ANY WARRANTY; without even the implied warranty of
 *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -22,14 +25,16 @@
 *  This copyright notice MUST APPEAR in all copies of the script!
 ***************************************************************/
 
-/** 
- * @author	Benjamin Mack (benni@typo3.org) 
+/**
+ * @author	Benjamin Mack (benni@typo3.org)
  * @subpackage	tx_seobasics
- * 
+ *
  * This package includes all functions for generating XML sitemaps
  */
- 
-class tx_seobasics_sitemap {
+use TYPO3\CMS\Core\Utility\GeneralUtility;
+
+
+class Sitemap {
 
 	protected $conf;
 
@@ -56,9 +61,9 @@ class tx_seobasics_sitemap {
 			// -- do a 301 redirect to the "main" sitemap.xml if not already there
 		if ($this->conf['redirectToMainSitemap'] && $baseURL) {
 			$sitemapURL = $baseURL . 'sitemap.xml';
-			$requestURL = t3lib_div::getIndpEnv('TYPO3_REQUEST_URL');
+			$requestURL = GeneralUtility::getIndpEnv('TYPO3_REQUEST_URL');
 			if ($requestURL != $sitemapURL && strpos($requestURL, 'sitemap.xml')) {
-				header('Location: ' . t3lib_div::locationHeaderUrl($sitemapURL), true, 301);
+				header('Location: ' . GeneralUtility::locationHeaderUrl($sitemapURL), true, 301);
 			}
 		}
 
@@ -71,7 +76,7 @@ class tx_seobasics_sitemap {
 		$parentId = $treeStartingRecord['pid'];
 		while ($parentId > 0) {
 			$parentRecord = $GLOBALS['TSFE']->sys_page->getRawRecord('pages', $parentId, $additionalFields);
-	
+
 				// check for shortcuts
 			if ($this->conf['resolveMainShortcut'] == 1) {
 				if ($parentRecord['doktype'] == 4 && ($parentRecord['shortcut'] == $id || $parentRecord['shortcut_mode'] > 0)) {
@@ -87,11 +92,8 @@ class tx_seobasics_sitemap {
 			}
 		}
 
-		if (version_compare(TYPO3_branch, '6.1', '>=')) {
-			$tree = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('B13\\SeoBasics\\Tree\\PageTreeView');
-		} else {
-			$tree = t3lib_div::makeInstance('t3lib_pageTree');
-		}
+		$tree = GeneralUtility::makeInstance('B13\\SeoBasics\\Tree\\PageTreeView');
+
 		$tree->addField('SYS_LASTCHANGED', 1);
 		$tree->addField('crdate', 1);
 		$tree->addField('no_search', 1);
@@ -109,7 +111,7 @@ class tx_seobasics_sitemap {
 	            while (!(boolean)$page['is_siteroot'] && $i >= 0) {
 	                $i--;
 	                $page = $rootline[$i];
-	
+
 	            }
 	        }
 
@@ -163,14 +165,14 @@ class tx_seobasics_sitemap {
 				'lastmod' => $lastmod
 			);
 		}
-		
+
 		// check for additional pages
 		$additionalPages = trim($this->conf['scrapeLinksFromPages']);
 		if ($additionalPages) {
-			$additionalPages = t3lib_div::trimExplode(',', $additionalPages, TRUE);
+			$additionalPages = GeneralUtility::trimExplode(',', $additionalPages, TRUE);
 			if (count($additionalPages)) {
 				$additionalSubpagesOfPages = $this->conf['scrapeLinksFromPages.']['includingSubpages'];
-				$additionalSubpagesOfPages = t3lib_div::trimExplode(',', $additionalSubpagesOfPages);
+				$additionalSubpagesOfPages = GeneralUtility::trimExplode(',', $additionalSubpagesOfPages);
 				$this->fetchAdditionalUrls($additionalPages, $additionalSubpagesOfPages);
 			}
 		}
@@ -179,7 +181,7 @@ class tx_seobasics_sitemap {
 			// creating the XML output
 		$content = '';
 
-		
+
 			// create the content
 		foreach ($this->usedUrls as $urlData) {
 
@@ -209,7 +211,7 @@ class tx_seobasics_sitemap {
 				'usedUrls' => &$this->usedUrls,
 			);
 			foreach ($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['seo_basics']['sitemap']['additionalUrlsHook'] as $_funcRef) {
-				t3lib_div::callUserFunction($_funcRef, $_params, $this);
+				GeneralUtility::callUserFunction($_funcRef, $_params, $this);
 			}
 		}
 
@@ -221,18 +223,18 @@ class tx_seobasics_sitemap {
 
 		return $content;
 	}
-	
-	
+
+
 	/**
 	 * fetches all URLs from existing pages + the subpages (1-level)
 	 * and adds them to the $usedUrls array of the object
-	 * 
+	 *
 	 * @param array $additionalPages
 	 * @param array $additionalSubpagesOfPages array to keep track which subpages have been fetched already
 	 */
 	protected function fetchAdditionalUrls($additionalPages, $additionalSubpagesOfPages = array()) {
 
-		$baseUrl = t3lib_div::getIndpEnv('TYPO3_SITE_URL');
+		$baseUrl = GeneralUtility::getIndpEnv('TYPO3_SITE_URL');
 		foreach ($additionalPages as $additionalPage) {
 			$newlyFoundUrls = array();
 			if (in_array($additionalPage, $additionalSubpagesOfPages)) {
@@ -278,33 +280,33 @@ class tx_seobasics_sitemap {
 			}
 		}
 	}
-	
+
 
 	/**
 	 * function to fetch all links from a page
 	 * by making a call to fetch the contents of the URL (via getURL)
 	 * and then applying certain regular expressions
-	 * 
+	 *
 	 * also takes "nofollow" into account (!)
-	 * 
+	 *
 	 * @param string $url
 	 * @return array the found URLs
 	 */
 	protected function fetchLinksFromPage($url) {
-		$content = t3lib_div::getUrl($url);
+		$content = GeneralUtility::getUrl($url);
 		$foundLinks = array();
 
 		$result = array();
 		$regexp = '/<a\s+(?:[^"\'>]+|"[^"]*"|\'[^\']*\')*href=("[^"]+"|\'[^\']+\'|[^<>\s]+)([^>]+)/i';
 		preg_match_all($regexp, $content, $result);
 
-		$baseUrl = t3lib_div::getIndpEnv('TYPO3_SITE_URL');
+		$baseUrl = GeneralUtility::getIndpEnv('TYPO3_SITE_URL');
 		foreach ($result[1] as $pos => $link) {
-		
+
 			if (strpos($result[2][$pos], '"nofollow"') !== FALSE || strpos($result[0][$pos], '"nofollow"') !== FALSE) {
 				continue;
 			}
-		
+
 			$link = trim($link, '"');
 			list($link) = explode('#', $link);
 			$linkParts = parse_url($link);
@@ -319,13 +321,13 @@ class tx_seobasics_sitemap {
 			if ($linkParts['scheme'] == 'mailto') {
 				continue;
 			}
-			
+
 				// dont include files
 			$fileName = basename($linkParts['path']);
 			if (strpos($fileName, '.') !== FALSE && file_exists(PATH_site . ltrim($linkParts['path'], '/'))) {
 				continue;
 			}
-			
+
 			if ($link != $url) {
 				$foundLinks[$link] = $link;
 			}
@@ -343,7 +345,7 @@ class tx_seobasics_sitemap {
 		// precedence: $this->conf['useDomain'], config.baseURL, the domain record, config.absRefPrefix
 		if (isset($this->conf['useDomain'])) {
 			if ($this->conf['useDomain'] == 'current') {
-				$baseURL = t3lib_div::getIndpEnv('TYPO3_SITE_URL');
+				$baseURL = GeneralUtility::getIndpEnv('TYPO3_SITE_URL');
 			} else {
 				$baseURL = $this->conf['useDomain'];
 			}
@@ -381,5 +383,3 @@ class tx_seobasics_sitemap {
 		return $baseURL;
 	}
 }
-
-?>
