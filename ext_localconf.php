@@ -11,7 +11,7 @@ $extconf = unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf']['seo_basics
 
 	// registering hook for correct indenting of output
 if ($extconf['sourceFormatting'] == '1') {
-	$GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['tslib/class.tslib_fe.php']['contentPostProc-output']['tx_seobasics'] = 'EXT:seo_basics/class.tx_seobasics.php:&tx_seobasics->processOutputHook';
+	$GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['tslib/class.tslib_fe.php']['contentPostProc-output']['tx_seobasics'] = 'B13\\SeoBasics\\Frontend\\Hook->processOutputHook';
 }
 
 	// registering sitemap.xml for each hierachy of configuration to realurl (meaning to every website in a multisite installation)
