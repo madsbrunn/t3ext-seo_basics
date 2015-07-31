@@ -24,12 +24,22 @@ $tmpCol = array(
 			'max' => '70',
 			'eval' => 'trim'
 		)
+	),
+	'tx_seo_noindex' => array(
+		'exclude' => 1,
+		'label' => 'LLL:EXT:seo_basics/Resources/Private/Language/locallang_be.xlf:pages.noindex',
+		'config' => Array (
+			'type' => 'check',
+			'default' => 0
+		)
 	)
 );
 
 \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::addTCAcolumns('pages', $tmpCol, 1);
 \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::addTCAcolumns('pages_language_overlay', $tmpCol, 1);
-\TYPO3\CMS\Core\Utility\ExtensionManagementUtility::addToAllTCAtypes('pages', 'tx_seo_titletag;;;;, tx_seo_canonicaltag', 1, 'before:keywords');
-\TYPO3\CMS\Core\Utility\ExtensionManagementUtility::addToAllTCAtypes('pages_language_overlay', 'tx_seo_titletag, tx_seo_canonicaltag, nav_title, tx_realurl_pathsegment;;;;', "4,5", 'after:subtitle');
+\TYPO3\CMS\Core\Utility\ExtensionManagementUtility::addToAllTCAtypes('pages', 'tx_seo_titletag;;;;', 1, 'before:keywords');
+\TYPO3\CMS\Core\Utility\ExtensionManagementUtility::addToAllTCAtypes('pages_language_overlay', 'tx_seo_titletag, tx_seo_canonicaltag, tx_seo_noindex, nav_title, tx_realurl_pathsegment;;;;', 1, 'after:subtitle');
 
-$GLOBALS['TCA']['pages_language_overlay']['interface']['showRecordFieldList'] .= ',tx_seo_titletag, tx_seo_canonicaltag';
+$GLOBALS['TCA']['pages']['palettes']['metatags']['showitem'] .= ',--linebreak--, tx_seo_canonicaltag, --linebreak--,tx_seo_noindex';
+
+$GLOBALS['TCA']['pages_language_overlay']['interface']['showRecordFieldList'] .= ',tx_seo_titletag, tx_seo_canonicaltag, tx_seo_noindex';

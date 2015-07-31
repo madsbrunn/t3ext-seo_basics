@@ -167,6 +167,7 @@ class ModuleController extends \TYPO3\CMS\Backend\Module\AbstractFunctionModule 
 			$tree->addField('tx_seo_titletag', 1);
 			$tree->addField('keywords', 1);
 			$tree->addField('description', 1);
+			$tree->addField('tx_seo_noindex', 1);
 			if (ExtensionManagementUtility::isLoaded('realurl')) {
 				$tree->addField('tx_realurl_pathsegment', 1);
 			}
@@ -265,6 +266,7 @@ class ModuleController extends \TYPO3\CMS\Backend\Module\AbstractFunctionModule 
 					$item['keywords'] = $translations[$this->langOnly]['keywords'];
 					$item['description'] = $translations[$this->langOnly]['description'];
 					$item['sys_language'] = $this->langOnly;
+					$item['tx_seo_noindex'] = $translations[$this->langOnly]['tx_seo_noindex'];
 					$itemID = $item['uid'];
 				}
 				// if no specific language is chosen, display all translations of a page
@@ -332,9 +334,11 @@ class ModuleController extends \TYPO3\CMS\Backend\Module\AbstractFunctionModule 
 			$tCells[] = '<td>Title&nbsp;Tag</td>';
 			$tCells[] = '<td>Keywords</td>';
 			$tCells[] = '<td>Description</td>';
+			$tCells[] = '<td>No index?</td>';
 		} else {
 			$tCells[] = '<td colspan="2">Title&nbsp;Tag</td>';
 			$tCells[] = '<td colspan="2">Keywords</td>';
+			$tCells[] = '<td>No index?</td>';
 		}
 		$output = '
 			<tr class="bgColor5 tableheader t3-row-header">
@@ -357,12 +361,14 @@ class ModuleController extends \TYPO3\CMS\Backend\Module\AbstractFunctionModule 
 		$cmd = GeneralUtility::_GP('cmd');
 		$row1 = array();
 		$row2 = array();
+		$row3 = array();
 
 		if ($cmd != 'edit') {
 			$row1[] = $item['pathcache'];
 			$row1[] = $item['tx_seo_titletag'];
 			$row1[] = $item['keywords'];
 			$row1[] = $item['description'];
+			$row1[] = $item['tx_seo_noindex'] ? 'Yes' : 'No';
 
 			// before output, wrap each cell in tds
 			foreach ($row1 as $k => $v) {
@@ -373,10 +379,13 @@ class ModuleController extends \TYPO3\CMS\Backend\Module\AbstractFunctionModule 
 			$tbl = ($item['sys_language'] > 0 ? 'pages_language_overlay' : 'pages');
 			$fName = 'tx_seo[' . $tbl . '][' . $item['uid'] . ']';
 
-			$row1[] = '<td>Title-Tag:</td><td><input name="' . $fName . '[tx_seo_titletag]" value="' . htmlspecialchars($item['tx_seo_titletag']) . '" type="text" size="43" maxlength="100" autocomplete="off" class="seoTitleTag"/></td><td>Keywords:</td><td><input name="' . $fName . '[keywords]" value="' . htmlspecialchars($item['keywords']) . '" type="text" size="67" maxlength="180" autocomplete="off" class="seoKeywords"/></td>';
+			$row1[] = '<td>Title-Tag:</td>'
+					. '<td><input name="' . $fName . '[tx_seo_titletag]" value="' . htmlspecialchars($item['tx_seo_titletag']) . '" type="text" size="43" maxlength="100" autocomplete="off" class="seoTitleTag"/></td>'
+					. '<td>Keywords:</td><td><input name="' . $fName . '[keywords]" value="' . htmlspecialchars($item['keywords']) . '" type="text" size="67" maxlength="180" autocomplete="off" class="seoKeywords"/></td>'
+					. '<td rowspan="2"><input name="'.$fName.'[tx_seo_noindex]" value="1" type="checkbox"'.( $item['tx_seo_noindex'] ? ' checked="checked"' : '').'/></td>';
 
 			$row2[] = '<td>Description:</td><td colspan="3"><input name="' . $fName . '[description]" value="' . htmlspecialchars($item['description']) . '" type="text" size="120" autocomplete="off" class="seoDescription"/><br/><br/></td>';
-			$row2[] = '' . $fields . '';
+
 		}
 
 		if ($this->sysHasLangs) {
@@ -404,12 +413,11 @@ class ModuleController extends \TYPO3\CMS\Backend\Module\AbstractFunctionModule 
 			return;
 		}
 
-
 		// building where clause
 		$where = ($this->langOnly ? ' AND sys_language_uid = ' . $this->langOnly : '');
 
 		$res = $GLOBALS['TYPO3_DB']->exec_SELECTquery(
-			'uid, pid, sys_language_uid, title, tx_seo_titletag, keywords, description', 'pages_language_overlay', 'pid IN (' . $uidList . ') AND deleted = 0 ' . $where, '', 'pid ASC, sys_language_uid ASC'
+			'uid, pid, sys_language_uid, title, tx_seo_titletag, tx_seo_noindex, keywords, description', 'pages_language_overlay', 'pid IN (' . $uidList . ') AND deleted = 0 ' . $where, '', 'pid ASC, sys_language_uid ASC'
 		);
 
 		// fill results into instance variable
@@ -420,7 +428,8 @@ class ModuleController extends \TYPO3\CMS\Backend\Module\AbstractFunctionModule 
 				'title' => $row['title'],
 				'tx_seo_titletag' => $row['tx_seo_titletag'],
 				'keywords' => $row['keywords'],
-				'description' => $row['description']
+				'description' => $row['description'],
+				'tx_seo_noindex' => $row['tx_seo_noindex']
 			);
 			$this->langOverlays[$row['pid']][$row['sys_language_uid']] = $item;
 		}
@@ -517,15 +526,16 @@ class ModuleController extends \TYPO3\CMS\Backend\Module\AbstractFunctionModule 
 			// run through every item in the table
 			foreach ($res as $uid => $item) {
 				$uid = intval($uid);
-				if (empty($item['tx_seo_titletag']) && empty($item['keywords']) && empty($item['description'])) {
+
+				if (empty($item['tx_seo_titletag']) && empty($item['keywords']) && empty($item['description']) && $item['tx_seo_noindex'] === 0) {
 					$emptyItems[] = $uid;
-					continue;
 				}
 
 				$fields = array(
 					'tx_seo_titletag' => $item['tx_seo_titletag'],
 					'keywords' => $item['keywords'],
-					'description' => $item['description']
+					'description' => $item['description'],
+					'tx_seo_noindex' => $item['tx_seo_noindex']
 				);
 				$GLOBALS['TYPO3_DB']->exec_UPDATEquery($tbl, 'uid = ' . $uid, $fields);
 			}
@@ -537,8 +547,9 @@ class ModuleController extends \TYPO3\CMS\Backend\Module\AbstractFunctionModule 
 				$fields = array(
 					'tx_seo_titletag' => '',
 					'keywords' => '',
-					'description' => ''
-				);
+					'description' => '',
+					'tx_seo_noindex' => 0
+ 				);
 				$GLOBALS['TYPO3_DB']->exec_UPDATEquery($tbl, 'uid IN (' . $uidList . ')', $fields);
 			}
 		}

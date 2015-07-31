@@ -55,6 +55,11 @@ plugin.tx_seobasics {
 	50.stdWrap >
 	50.wrap = <meta name="date" content="|" />
 
+	55 = TEXT
+	55.if.isTrue.data = page:tx_seo_noindex
+	55.wrap = <meta name="robots" content="noindex" />
+	55.append < .5
+
 	# Building the canonical tag
 	60 = TEXT
 	60.stdWrap.cObject = USER

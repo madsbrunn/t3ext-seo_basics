@@ -4,8 +4,8 @@ if (!defined('TYPO3_MODE')) {
 	die('Access denied.');
 }
 
-	// adding th tx_seo_titletag to the pageOverlayFields so it is recognized when fetching the overlay fields
-$GLOBALS['TYPO3_CONF_VARS']['FE']['pageOverlayFields'] .= ',tx_seo_titletag,tx_seo_canonicaltag';
+	// adding tx_seo_titletag,tx_seo_canonicaltag and tx_seo_noindex to the pageOverlayFields so it is recognized when fetching the overlay fields
+$GLOBALS['TYPO3_CONF_VARS']['FE']['pageOverlayFields'] .= ',tx_seo_titletag,tx_seo_canonicaltag,tx_seo_noindex';
 
 $extconf = unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf']['seo_basics']);
 

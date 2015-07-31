@@ -12,6 +12,9 @@
 			<trans-unit id="pages.canonicaltag" xml:space="preserve">
 				<source>Canonical URL:</source>
 			</trans-unit>
+			<trans-unit id="pages.noindex" xml:space="preserve">
+				<source>No index</source>
+			</trans-unit>
 			<trans-unit id="moduleFunction.tx_seobasics_modfunc1" xml:space="preserve">
 				<source>SEO Management</source>
 			</trans-unit>
